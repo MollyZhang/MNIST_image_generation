@@ -64,6 +64,9 @@ else:
 def load_data_shared(filename="../data/mnist.pkl.gz"):
     f = gzip.open(filename, 'rb')
     training_data, validation_data, test_data = cPickle.load(f)
+
+    combined_test = (np.array(list(validation_data[0]) + list(test_data[0])),
+                 np.array(list(validation_data[1]) + list(test_data[1])))
     f.close()
     def shared(data):
         """Place the data into shared variables.  This allows Theano to copy
@@ -75,7 +78,7 @@ def load_data_shared(filename="../data/mnist.pkl.gz"):
         shared_y = theano.shared(
             np.asarray(data[1], dtype=theano.config.floatX), borrow=True)
         return shared_x, T.cast(shared_y, "int32")
-    return [shared(training_data), shared(validation_data), shared(test_data)]
+    return [shared(training_data), shared(combined_test), shared(test_data)]
 
 #### Main class used to construct and train networks
 class Network(object):
@@ -101,16 +104,14 @@ class Network(object):
         self.output_dropout = self.layers[-1].output_dropout
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
-            validation_data, test_data, lmbda=0.0):
+            validation_data, lmbda=0.0):
         """Train the network using mini-batch stochastic gradient descent."""
         training_x, training_y = training_data
         validation_x, validation_y = validation_data
-        test_x, test_y = test_data
 
         # compute number of minibatches for training, validation and testing
         num_training_batches = size(training_data)/mini_batch_size
         num_validation_batches = size(validation_data)/mini_batch_size
-        num_test_batches = size(test_data)/mini_batch_size
 
         # define the (regularized) cost function, symbolic gradients, and updates
         l2_norm_squared = sum([(layer.w**2).sum() for layer in self.layers])
@@ -139,46 +140,28 @@ class Network(object):
                 self.y:
                 validation_y[i*self.mini_batch_size: (i+1)*self.mini_batch_size]
             })
-        test_mb_accuracy = theano.function(
-            [i], self.layers[-1].accuracy(self.y),
-            givens={
-                self.x:
-                test_x[i*self.mini_batch_size: (i+1)*self.mini_batch_size],
-                self.y:
-                test_y[i*self.mini_batch_size: (i+1)*self.mini_batch_size]
-            })
-        self.test_mb_predictions = theano.function(
-            [i], self.layers[-1].y_out,
-            givens={
-                self.x:
-                test_x[i*self.mini_batch_size: (i+1)*self.mini_batch_size]
-            })
+
         # Do the actual training
         best_validation_accuracy = 0.0
+        accuracies = []
+        batch_num = 0
         for epoch in xrange(epochs):
             for minibatch_index in xrange(num_training_batches):
-                iteration = num_training_batches*epoch+minibatch_index
-                if iteration % 1000 == 0:
-                    print("Training mini-batch number {0}".format(iteration))
                 cost_ij = train_mb(minibatch_index)
-                if (iteration+1) % num_training_batches == 0:
+                batch_num += 1
+                if batch_num%100 == 0:
                     validation_accuracy = np.mean(
                         [validate_mb_accuracy(j) for j in xrange(num_validation_batches)])
-                    print("Epoch {0}: validation accuracy {1:.2%}".format(
-                        epoch, validation_accuracy))
+                    print("epoch {0}, batch {1}: validation accuracy {2:.2%}".format(
+                        epoch, batch_num, validation_accuracy))
                     if validation_accuracy >= best_validation_accuracy:
+                        accuracies.append(validation_accuracy)
                         print("This is the best validation accuracy to date.")
                         best_validation_accuracy = validation_accuracy
-                        best_iteration = iteration
-                        if test_data:
-                            test_accuracy = np.mean(
-                                [test_mb_accuracy(j) for j in xrange(num_test_batches)])
-                            print('The corresponding test accuracy is {0:.2%}'.format(
-                                test_accuracy))
-        print("Finished training network.")
-        print("Best validation accuracy of {0:.2%} obtained at iteration {1}".format(
-            best_validation_accuracy, best_iteration))
-        print("Corresponding test accuracy of {0:.2%}".format(test_accuracy))
+        print("Done")
+        print("Best validation accuracy of {0:.2%}".format(best_validation_accuracy))
+        return accuracies
+
 
 #### Define layer types
 
