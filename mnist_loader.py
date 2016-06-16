@@ -44,12 +44,12 @@ def load_data():
     f.close()
     return (training_data, validation_data, test_data)
 
-def load_1_percent_data():
+def load_1_percent_data(seed):
     f = gzip.open('data/mnist.pkl.gz', 'rb')
     training_data, validation_data, test_data = cPickle.load(f)
     f.close()
 
-    np.random.seed(0)
+    np.random.seed(seed)
 
     train_index = np.random.permutation(len(training_data[0]))[0:500]
     x_train_sample = training_data[0][train_index]
