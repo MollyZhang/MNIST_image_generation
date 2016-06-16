@@ -27,7 +27,7 @@ def generate_more_image():
     """produce more image by fading out"""
     step = 10
     training_set, validation_set, test_set = mnist_loader.load_percent_data(
-        seed=0, percentage=0.1)
+        seed=0, percentage=0.01)
     expanded_images = []
     expanded_labels = []
     for digit in range(10):
@@ -38,9 +38,9 @@ def generate_more_image():
                 x2 = images[j]
                 x = x2 - x1
                 dx = x/step
-                transitional_images = [x1 + dx*k for k in range(step)]
+                transitional_images = [x1 + dx*k for k in range(1, step)]
                 expanded_images += transitional_images
-                expanded_labels += [digit] * step
+                expanded_labels += [digit] * (step-1)
 
 
     all_images = np.array(expanded_images + list(training_set[0]))
@@ -54,7 +54,7 @@ def generate_more_image():
     print all_labels[:10]
     plot_images_together(all_images[:10])
 
-    fp=gzip.open('data/mnist_10_percent_expanded.pkl.gz','wb')
+    fp=gzip.open('data/mnist_1_percent_expanded.pkl.gz','wb')
     pickle.dump((new_training_set, validation_set, test_set), fp)
     fp.close()
 
