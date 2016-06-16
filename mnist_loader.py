@@ -44,6 +44,31 @@ def load_data():
     f.close()
     return (training_data, validation_data, test_data)
 
+def load_1_percent_data():
+    f = gzip.open('data/mnist.pkl.gz', 'rb')
+    training_data, validation_data, test_data = cPickle.load(f)
+    f.close()
+
+    np.random.seed(0)
+
+    train_index = np.random.permutation(len(training_data[0]))[0:500]
+    x_train_sample = training_data[0][train_index]
+    y_train_sample = training_data[1][train_index]
+    train_sample = (x_train_sample, y_train_sample)
+
+    val_index = np.random.permutation(len(validation_data[0]))[0:100]
+    x_val_sample = validation_data[0][val_index]
+    y_val_sample = validation_data[1][val_index]
+    val_sample = (x_val_sample, y_val_sample)
+
+    x_test_sample = test_data[0][val_index]
+    y_test_sample = test_data[1][val_index]
+    test_sample = (x_test_sample, y_test_sample)
+
+    return (train_sample, val_sample, test_sample)
+
+
+
 def load_data_wrapper():
     """Return a tuple containing ``(training_data, validation_data,
     test_data)``. Based on ``load_data``, but the format is more
