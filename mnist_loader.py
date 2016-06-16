@@ -16,7 +16,7 @@ import gzip
 # Third-party libraries
 import numpy as np
 
-def load_data():
+def load_data(file):
     """Return the MNIST data as a tuple containing the training data,
     the validation data, and the test data.
 
@@ -39,24 +39,27 @@ def load_data():
     That's done in the wrapper function ``load_data_wrapper()``, see
     below.
     """
-    f = gzip.open('data/mnist.pkl.gz', 'rb')
+    f = gzip.open(file, 'rb')
     training_data, validation_data, test_data = cPickle.load(f)
     f.close()
     return (training_data, validation_data, test_data)
 
-def load_1_percent_data(seed):
+def load_percent_data(seed=0, percentage=0.1):
     f = gzip.open('data/mnist.pkl.gz', 'rb')
     training_data, validation_data, test_data = cPickle.load(f)
     f.close()
 
+    training_size = int(percentage * len(training_data[0]))
+    val_size = int(percentage * len(validation_data[0]))
+
     np.random.seed(seed)
 
-    train_index = np.random.permutation(len(training_data[0]))[0:500]
+    train_index = np.random.permutation(len(training_data[0]))[0:training_size]
     x_train_sample = training_data[0][train_index]
     y_train_sample = training_data[1][train_index]
     train_sample = (x_train_sample, y_train_sample)
 
-    val_index = np.random.permutation(len(validation_data[0]))[0:100]
+    val_index = np.random.permutation(len(validation_data[0]))[0:val_size]
     x_val_sample = validation_data[0][val_index]
     y_val_sample = validation_data[1][val_index]
     val_sample = (x_val_sample, y_val_sample)
@@ -66,6 +69,7 @@ def load_1_percent_data(seed):
     test_sample = (x_test_sample, y_test_sample)
 
     return (train_sample, val_sample, test_sample)
+
 
 
 

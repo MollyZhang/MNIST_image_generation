@@ -23,12 +23,11 @@ import cPickle as pickle
 def main():
     generate_more_image()
 
-
-
 def generate_more_image():
     """produce more image by fading out"""
     step = 10
-    training_set, validation_set, test_set = mnist_loader.load_1_percent_data(0)
+    training_set, validation_set, test_set = mnist_loader.load_percent_data(
+        seed=0, percentage=0.1)
     expanded_images = []
     expanded_labels = []
     for digit in range(10):
@@ -43,15 +42,19 @@ def generate_more_image():
                 expanded_images += transitional_images
                 expanded_labels += [digit] * step
 
+
     all_images = np.array(expanded_images + list(training_set[0]))
     all_labels = np.array(expanded_labels + list(training_set[1]))
 
-    all_images = all_images[np.random.permutation(len(all_images))]
-    all_labels = all_labels[np.random.permutation(len(all_labels))]
+    permutaed_index = np.random.permutation(len(all_images))
+    all_images = all_images[permutaed_index]
+    all_labels = all_labels[permutaed_index]
 
     new_training_set = (all_images, all_labels)
+    print all_labels[:10]
+    plot_images_together(all_images[:10])
 
-    fp=gzip.open('data/mnist_1_perecent_expanded.pkl.gz','wb')
+    fp=gzip.open('data/mnist_10_percent_expanded.pkl.gz','wb')
     pickle.dump((new_training_set, validation_set, test_set), fp)
     fp.close()
 
@@ -82,11 +85,21 @@ def plot_fade_out_transition():
 
 
 #### Plotting
-def plot_images_together(images, digit):
+def plot_images_together(images):
     """ Plot a single image containing all six MNIST images, one after
     the other.  Note that we crop the sides of the images so that they
     appear reasonably close together."""
+    fig = plt.figure()
+    images_2d = [np.reshape(image, (-1, 28)) for image in images]
 
+
+    images = [image[:, 3:25] for image in images_2d]
+    image = np.concatenate(images, axis=1)
+    ax = fig.add_subplot(1, 1, 1)
+    ax.matshow(image, cmap = matplotlib.cm.binary)
+    plt.xticks(np.array([]))
+    plt.yticks(np.array([]))
+    plt.show()
 
 
 
