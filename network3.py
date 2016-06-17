@@ -154,10 +154,12 @@ class Network(object):
                         [validate_mb_accuracy(j) for j in xrange(num_validation_batches)])
                     print("epoch {0}, batch {1}: validation accuracy {2:.2%}".format(
                         epoch, batch_num, validation_accuracy))
-                    if validation_accuracy >= best_validation_accuracy:
-                        accuracies.append(validation_accuracy)
+                    accuracies.append(validation_accuracy)
+                    if validation_accuracy > best_validation_accuracy:
                         print("This is the best validation accuracy to date.")
                         best_validation_accuracy = validation_accuracy
+            if batch_num > 20000:
+                break
         print("Done")
         print("Best validation accuracy of {0:.2%}".format(best_validation_accuracy))
         return accuracies

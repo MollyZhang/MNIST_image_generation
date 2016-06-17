@@ -21,11 +21,47 @@ import gzip
 import cPickle as pickle
 
 def main():
-    generate_more_image()
+    generate_more_image_no_middle()
+
+def generate_more_image_no_middle():
+    """produce more image by fading out"""
+    step = 10
+    training_set, validation_set, test_set = mnist_loader.load_percent_data(
+        seed=0, percentage=0.01)
+    expanded_images = []
+    expanded_labels = []
+    for digit in range(10):
+        images = get_images_by_digit_flat(training_set, digit)
+        for i in range(len(images)):
+            for j in range(i+1, len(images)):
+                x1 = images[i]
+                x2 = images[j]
+                x = x2 - x1
+                dx = x/step
+                transitional_images = [x1 + dx*k for k in range(1, step) if k<=3 or k>=7]
+                expanded_images += transitional_images
+                expanded_labels += [digit] * (step-4)
+
+
+    all_images = np.array(expanded_images + list(training_set[0]))
+    all_labels = np.array(expanded_labels + list(training_set[1]))
+
+    permutaed_index = np.random.permutation(len(all_images))
+    all_images = all_images[permutaed_index]
+    all_labels = all_labels[permutaed_index]
+
+    new_training_set = (all_images, all_labels)
+    print all_labels[:10]
+    plot_images_together(all_images[:10])
+
+    fp=gzip.open('data/mnist_1_percent_expanded_10_step_no_mid.pkl.gz','wb')
+    pickle.dump((new_training_set, validation_set, test_set), fp)
+    fp.close()
+
 
 def generate_more_image():
     """produce more image by fading out"""
-    step = 10
+    step = 5
     training_set, validation_set, test_set = mnist_loader.load_percent_data(
         seed=0, percentage=0.01)
     expanded_images = []
@@ -54,14 +90,15 @@ def generate_more_image():
     print all_labels[:10]
     plot_images_together(all_images[:10])
 
-    fp=gzip.open('data/mnist_1_percent_expanded.pkl.gz','wb')
+    fp=gzip.open('data/mnist_1_percent_expanded_5_step.pkl.gz','wb')
     pickle.dump((new_training_set, validation_set, test_set), fp)
     fp.close()
 
 def plot_fade_out_transition():
-    training_set, validation_set, test_set = mnist_loader.load_1_percent_data()
+    training_set, validation_set, test_set = mnist_loader.load_percent_data(
+        percentage=0.01)
     fig = plt.figure()
-    step = 10
+    step = 5
     for digit in range(10):
         images = get_images_by_digit(training_set, digit)
         now = datetime.datetime.now().microsecond
