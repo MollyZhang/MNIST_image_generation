@@ -1,2 +1,2 @@
 experiment with generating more MNIST data by:
-1. transitioning from one image of a digit to another image of a digit and record the transition process
+1. transitioning from one image of a digit to another image of the same digit and use the transitional images as new training data for that image
